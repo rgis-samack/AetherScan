@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AetherScan - Analisador Visual de Armazenamento</title>
+    <!-- Google Fonts: Outfit e Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- CSS personalizado -->
+    <link rel="stylesheet" href="styles.css">
+    <!-- Chart.js para gráficos interativos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon-wrapper">
+                    <i data-lucide="shield-alert" class="logo-icon animate-pulse-glow"></i>
+                </div>
+                <div>
+                    <h1>AetherScan</h1>
+                    <p class="subtitle">Análise Visual de Armazenamento (Web)</p>
+                </div>
+            </div>
+            
+            <div class="actions-area">
+                <span id="active-path-label" class="active-path-text" style="display: none;"></span>
+                <button id="btn-select-folder" class="btn btn-primary btn-glow">
+                    <i data-lucide="folder-open"></i>
+                    <span>Selecionar Pasta</span>
+                </button>
+                <div id="scan-status" class="scan-status hidden">
+                    <div class="spinner"></div>
+                    <span id="scan-status-text">Escaneando...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Bar -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon-wrapper bg-blue-glow">
+                    <i data-lucide="hard-drive"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Espaço Total</span>
+                    <span id="stat-total-size" class="stat-value">0 B</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon-wrapper bg-purple-glow">
+                    <i data-lucide="files"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Arquivos</span>
+                    <span id="stat-total-files" class="stat-value">0</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon-wrapper bg-orange-glow">
+                    <i data-lucide="folder"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Pastas Varridas</span>
+                    <span id="stat-total-folders" class="stat-value">0</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon-wrapper bg-pink-glow">
+                    <i data-lucide="file-warning"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-label">Maior Arquivo</span>
+                    <span id="stat-largest-file" class="stat-value">-</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Workspace -->
+        <main class="workspace-layout">
+            <!-- Sidebar Filters -->
+            <aside class="sidebar-filters">
+                <div class="panel-header">
+                    <i data-lucide="sliders-horizontal"></i>
+                    <h2>Filtros e Controles</h2>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="search-input">Buscar por Nome</label>
+                    <div class="input-with-icon">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="search-input" placeholder="Ex: video.mp4, backup...">
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label for="size-filter">Tamanho Mínimo</label>
+                    <select id="size-filter" class="custom-select">
+                        <option value="0">Todos os tamanhos</option>
+                        <option value="1048576">Maior que 1 MB</option>
+                        <option value="10485760">Maior que 10 MB</option>
+                        <option value="52428800" selected>Maior que 50 MB</option>
+                        <option value="104857600">Maior que 100 MB</option>
+                        <option value="524288000">Maior que 500 MB</option>
+                        <option value="1073741824">Maior que 1 GB</option>
+                        <option value="5368709120">Maior que 5 GB</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Categorias de Arquivos</label>
+                    <div class="category-checkboxes">
+                        <label class="checkbox-container">
+                            <input type="checkbox" checked value="video" class="category-filter">
+                            <span class="checkmark bg-video"></span>
+                            <span class="checkbox-label">Vídeos</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" checked value="audio" class="category-filter">
+                            <span class="checkmark bg-audio"></span>
+                            <span class="checkbox-label">Áudios</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" checked value="image" class="category-filter">
+                            <span class="checkmark bg-image"></span>
+                            <span class="checkbox-label">Imagens</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" checked value="document" class="category-filter">
+                            <span class="checkmark bg-document"></span>
+                            <span class="checkbox-label">Documentos</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" checked value="archive" class="category-filter">
+                            <span class="checkmark bg-archive"></span>
+                            <span class="checkbox-label">Compactados</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" checked value="executable" class="category-filter">
+                            <span class="checkmark bg-executable"></span>
+                            <span class="checkbox-label">Programas/Exec</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" checked value="other" class="category-filter">
+                            <span class="checkmark bg-other"></span>
+                            <span class="checkbox-label">Outros</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label for="sort-select">Ordenar por</label>
+                    <select id="sort-select" class="custom-select">
+                        <option value="size-desc">Tamanho (Maior primeiro)</option>
+                        <option value="size-asc">Tamanho (Menor primeiro)</option>
+                        <option value="name-asc">Nome (A-Z)</option>
+                        <option value="type-asc">Extensão</option>
+                    </select>
+                </div>
+
+                <div class="sidebar-footer">
+                    <button id="btn-reset-filters" class="btn btn-secondary">
+                        <i data-lucide="refresh-cw"></i>
+                        <span>Resetar Filtros</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <section class="main-content">
+                <!-- Navigation Tabs -->
+                <div class="tab-navigation">
+                    <button class="tab-btn active" data-tab="tab-treemap">
+                        <i data-lucide="layout-grid"></i>
+                        <span>Mapa Visual (Treemap)</span>
+                    </button>
+                    <button class="tab-btn" data-tab="tab-charts">
+                        <i data-lucide="pie-chart"></i>
+                        <span>Distribuição de Tipos</span>
+                    </button>
+                    <button class="tab-btn" data-tab="tab-list">
+                        <i data-lucide="list-ordered"></i>
+                        <span>Lista Ordenada</span>
+                    </button>
+                    <button class="tab-btn" data-tab="tab-duplicates">
+                        <i data-lucide="copy"></i>
+                        <span>Arquivos Duplicados</span>
+                    </button>
+                    <button class="tab-btn" data-tab="tab-empty-folders">
+                        <i data-lucide="folder-x"></i>
+                        <span>Pastas Vazias</span>
+                    </button>
+                </div>
+
+                <!-- Tab Contents -->
+                <div class="tab-panels">
+                    <!-- Treemap View -->
+                    <div id="tab-treemap" class="tab-panel active">
+                        <div class="treemap-legend">
+                            <span class="legend-title">Legenda de Tamanhos:</span>
+                            <div class="legend-items">
+                                <span class="legend-item"><span class="legend-color size-gigantic"></span> &gt; 1 GB</span>
+                                <span class="legend-item"><span class="legend-color size-large"></span> 100 MB - 1 GB</span>
+                                <span class="legend-item"><span class="legend-color size-medium"></span> 10 MB - 100 MB</span>
+                                <span class="legend-item"><span class="legend-color size-small"></span> &lt; 10 MB</span>
+                            </div>
+                        </div>
+                        <div id="treemap-container" class="treemap-container">
+                            <div class="empty-state">
+                                <i data-lucide="folder-search" class="empty-icon"></i>
+                                <h3>Nenhum arquivo escaneado</h3>
+                                <p>Clique em "Selecionar Pasta" no topo para analisar seu armazenamento.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts View -->
+                    <div id="tab-charts" class="tab-panel">
+                        <div class="charts-grid">
+                            <div class="chart-card">
+                                <h3>Espaço Ocupado por Tipo</h3>
+                                <div class="chart-container">
+                                    <canvas id="type-size-chart"></canvas>
+                                </div>
+                            </div>
+                            <div class="chart-card">
+                                <h3>Quantidade de Arquivos por Tipo</h3>
+                                <div class="chart-container">
+                                    <canvas id="type-count-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- List View -->
+                    <div id="tab-list" class="tab-panel">
+                        <div class="list-table-container">
+                            <table class="file-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Extensão</th>
+                                        <th class="text-right">Tamanho</th>
+                                        <th>Caminho Relativo</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="file-list-body">
+                                    <tr>
+                                        <td colspan="5" class="table-empty">
+                                            Nenhum arquivo para exibir. Selecione uma pasta para começar.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="list-pagination" class="pagination-container hidden">
+                            <span id="pagination-info">Mostrando 0 de 0 arquivos</span>
+                            <div class="pagination-buttons">
+                                <button id="btn-prev-page" class="btn btn-small"><i data-lucide="chevron-left"></i></button>
+                                <button id="btn-next-page" class="btn btn-small"><i data-lucide="chevron-right"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Duplicates View -->
+                    <div id="tab-duplicates" class="tab-panel">
+                        <div class="duplicates-header" style="margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                                <div>
+                                    <h3 style="font-family: var(--font-header); font-size: 1.15rem; font-weight: 600;">Grupos de Arquivos Duplicados</h3>
+                                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">Detecta cópias exatas baseadas em tamanho e nome em pastas diferentes.</p>
+                                </div>
+                                <div class="badge-wasted-glow" id="dup-summary-badge" style="background: rgba(255, 0, 127, 0.08); border: 1px solid rgba(255, 0, 127, 0.3); padding: 8px 16px; border-radius: 8px; font-family: var(--font-header); font-size: 0.9rem; font-weight: 600;">
+                                    Espaço Desperdiçado: <span id="dup-wasted-space" style="color: var(--neon-pink); text-shadow: 0 0 5px var(--neon-pink-glow);">0 B</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="duplicates-container" class="duplicates-container" style="display: flex; flex-direction: column; gap: 16px; flex: 1; overflow-y: auto; max-height: 520px; padding-right: 4px;">
+                            <div class="empty-state">
+                                <i data-lucide="copy-check" class="empty-icon"></i>
+                                <h3>Nenhum arquivo escaneado</h3>
+                                <p>Selecione uma pasta no topo para analisar e buscar duplicados.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Empty Folders View -->
+                    <div id="tab-empty-folders" class="tab-panel">
+                        <div class="empty-folders-header" style="margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                                <div>
+                                    <h3 style="font-family: var(--font-header); font-size: 1.15rem; font-weight: 600;">Diretórios Vazios</h3>
+                                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">Pastas que não contêm arquivos ou subpastas.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="empty-folders-container" class="empty-folders-container" style="display: flex; flex-direction: column; gap: 12px; flex: 1; overflow-y: auto; max-height: 520px; padding-right: 4px;">
+                            <div class="empty-state">
+                                <i data-lucide="folder" class="empty-icon"></i>
+                                <h3>Nenhum arquivo escaneado</h3>
+                                <p>Selecione uma pasta no topo para analisar e buscar pastas vazias.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Sidebar: Details Panel -->
+            <aside id="sidebar-details" class="sidebar-details hidden">
+                <div class="panel-header">
+                    <i data-lucide="info"></i>
+                    <h2>Detalhes do Arquivo</h2>
+                    <button id="btn-close-details" class="btn-close"><i data-lucide="x"></i></button>
+                </div>
+                <div class="details-content">
+                    <div class="details-icon-wrapper" id="details-file-icon-box">
+                        <i data-lucide="file" id="details-icon" class="details-file-icon"></i>
+                    </div>
+                    <h3 id="details-filename" class="details-title">-</h3>
+                    
+                    <div class="detail-fields">
+                        <div class="detail-field">
+                            <span class="detail-label">Caminho Relativo:</span>
+                            <div class="path-copy-box">
+                                <span id="details-path" class="detail-value path-value">-</span>
+                                <button id="btn-copy-path" class="btn btn-icon" title="Copiar caminho">
+                                    <i data-lucide="copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="detail-field">
+                            <span class="detail-label">Tamanho do Arquivo:</span>
+                            <span id="details-size" class="detail-value text-highlight">-</span>
+                        </div>
+                        <div class="detail-field">
+                            <span class="detail-label">Tipo de Arquivo:</span>
+                            <span id="details-type" class="detail-value">-</span>
+                        </div>
+                        <div class="detail-field">
+                            <span class="detail-label">Última Modificação:</span>
+                            <span id="details-modified" class="detail-value">-</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-actions">
+                        <div class="alert-box note">
+                            <i data-lucide="shield-check"></i>
+                            <p>Esta ferramenta funciona 100% no seu navegador de forma segura. Seus arquivos locais são lidos apenas na sua máquina e nunca são enviados para um servidor.</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast hidden">
+        <i data-lucide="info" id="toast-icon"></i>
+        <span id="toast-message">Mensagem</span>
+    </div>
+
+    <!-- App Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
