@@ -1,5 +1,7 @@
 # AetherScan - Analisador e Filtro Visual de Armazenamento (Web)
 
+https://rgis-samack.github.io/AetherScan/
+
 O AetherScan é um analisador visual de arquivos premium de página única (SPA) projetado para rodar inteiramente no navegador. Ele escaneia pastas locais de forma 100% segura usando a API de Acesso ao Sistema de Arquivos (File System Access API) para exibir arquivos por tamanho e categorias usando gradientes neon, gráficos interativos e um mapa de calor em blocos (Treemap).
 
 Este diretório contém a **versão limpa para a Web**, ideal para hospedagem direta no **GitHub Pages**!
